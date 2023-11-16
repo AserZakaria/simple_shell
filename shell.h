@@ -14,6 +14,3 @@
 
 /* ShellLooper.c */
 int ShellLooper(info_t *, char **);
-int BuiltIn_Finder(info_t *);
-void CMD_Finder(info_t *);
-void ForkExecute_Cmd(info_t *);
