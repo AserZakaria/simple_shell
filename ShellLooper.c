@@ -59,27 +59,31 @@ int ShellLooper(info_t *Shellinfo, char **argument)
  *			1 if builtin found but not successful,
  *			-2 if builtin signals exit()
  */
-int BuiltIn_Finder(info_t *Shellinfo) {
-    builtin_table builtintbl[] = {
-        {"exit", _myexit},
-        {"env", mine_env},
-        {"help", Dir_changer},
-        {"history", list_history},
-        {"setenv", mine_New_env},
-        {"unsetenv", mine_Remove_env},
-        {"cd", _Cd},
-        {"alias", Alias_mimic},
-        {NULL, NULL}
-    };
+int BuiltIn_Finder(info_t *Shellinfo)
+{
+	builtin_table builtintbl[] = {
+		{"exit", _myexit},
+		{"env", mine_env},
+		{"help", Dir_changer},
+		{"history", list_history},
+		{"setenv", mine_New_env},
+		{"unsetenv", mine_Remove_env},
+		{"cd", _Cd},
+		{"alias", Alias_mimic},
+		{NULL, NULL}
+	};
 
-    int i;
-    for (i = 0; builtintbl[i].type; i++) {
-        if (Str_Comparison(Shellinfo->arg_list[0], builtintbl[i].type) == 0) {
-            Shellinfo->line_count++;
-            return builtintbl[i].func(Shellinfo);
-        }
-    }
-    return -1;
+	int i;
+
+	for (i = 0; builtintbl[i].type; i++)
+	{
+		if (Str_Comparison(Shellinfo->arg_list[0], builtintbl[i].type) == 0)
+		{
+			Shellinfo->line_count++;
+			return (builtintbl[i].func(Shellinfo));
+		}
+	}
+	return (-1);
 }
 /**
  * CMD_Finder - Locates command within the system's PATH variable to execute.
@@ -91,47 +95,44 @@ void CMD_Finder(info_t *Shellinfo)
 {
 	char *path = NULL;
 	int index = 0, counter = 0;
-	
+
 	Shellinfo->path = Shellinfo->arg_list[0];
 	if (Shellinfo->linecount_flag == 1)
 	{
 		Shellinfo->line_count++;
 		Shellinfo->linecount_flag = 0;
-    }
-	
+	}
 	for (index = 0; Shellinfo->argument[index]; index++)
 	{
 		if (!IS_delimeter(Shellinfo->argument[index], " \t\n"))
 		{
 			counter++;
-        }
-    }
-    if (!counter)
+		}
+	}
+	if (!counter)
 	{
-        return;
-    }
-	
+		return;
+	}
 	path = CMD_locator(Shellinfo, env_get(Shellinfo, "PATH="),
-	Shellinfo->arg_list[0]);
+			Shellinfo->arg_list[0]);
 	if (path)
 	{
 		Shellinfo->path = path;
 		ForkExecute_Cmd(Shellinfo);
-		} else
+	} else
+	{
+		if ((CheckIntMode(Shellinfo) || env_get(Shellinfo, "PATH=") ||
+					Shellinfo->arg_list[0][0] == '/') &&
+				is_cmd_Exec(Shellinfo, Shellinfo->arg_list[0]))
 		{
-			if ((CheckIntMode(Shellinfo) || env_get(Shellinfo, "PATH=") ||
-			Shellinfo->arg_list[0][0] == '/') &&
-			is_cmd_Exec(Shellinfo, Shellinfo->arg_list[0]))
-			{
-				ForkExecute_Cmd(Shellinfo);
-			 } else if (*(Shellinfo->argument) != '\n')
-				{
-					Shellinfo->status = 127;
-					Err_print(Shellinfo, "not found\n");
-				}
+			ForkExecute_Cmd(Shellinfo);
+		} else if (*(Shellinfo->argument) != '\n')
+		{
+			Shellinfo->status = 127;
+			Err_print(Shellinfo, "not found\n");
 		}
+	}
 }
-
 /**
  * ForkExecute_Cmd - Forks a child process and executes a command
  * @info: the parameter & return info struct
